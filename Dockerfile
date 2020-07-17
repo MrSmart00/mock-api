@@ -6,7 +6,7 @@ COPY . .
 
 RUN apk add alpine-sdk \
         git \
-    # && curl -fLo /go/bin/air https://git.io/linux_air \
-    # && chmod +x /go/bin/air
+    && curl -fLo /go/bin/air https://git.io/linux_air \
+    && chmod +x /go/bin/air
 
-# CMD air
+CMD air
