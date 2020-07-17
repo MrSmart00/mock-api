@@ -16,3 +16,6 @@
 
 # GoLand settings
 .idea/
+
+# air settings
+tmp/
