@@ -4,7 +4,7 @@ WORKDIR /go/src/app
 
 COPY . .
 
-RUN apk add alpine-sdk \
+RUN apk add curl \
         git \
     && curl -fLo /go/bin/air https://git.io/linux_air \
     && chmod +x /go/bin/air
