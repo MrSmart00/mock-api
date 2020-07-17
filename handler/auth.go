@@ -10,11 +10,13 @@ import (
 	"time"
 )
 
-const SigningKey = "secret"
-
 type JwtCustomClaims struct {
 	email string
 	jwt.StandardClaims
+}
+
+func SigningKey() []byte {
+	return []byte("secret")
 }
 
 func Signup(c echo.Context) error {
@@ -72,14 +74,14 @@ func generateToken(identifier *model.Identifier) (string, error) {
 	claims["uuid"] = uuid.String()
 	claims["email"] = identifier.Email
 	claims["expired"] = time.Now().Add(time.Hour * 2).Unix()
-	accessToken, error := token.SignedString([]byte(SigningKey))
+	accessToken, error := token.SignedString(SigningKey())
 	if error != nil {
 		return "", error
 	}
 	return accessToken, nil
 }
 
-func Restricted(c echo.Context) error {
+func User(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	uuid := claims["uuid"].(string)

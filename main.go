@@ -16,8 +16,8 @@ func main() {
 	e.POST("/login", handler.Login)
 
 	r := e.Group("/user")
-	r.Use(middleware.JWT([]byte(handler.SigningKey)))
-	r.GET("", handler.Restricted)
+	r.Use(middleware.JWT(handler.SigningKey()))
+	r.POST("", handler.User)
 
 	e.Logger.Fatal(e.Start(":3200"))
 }
