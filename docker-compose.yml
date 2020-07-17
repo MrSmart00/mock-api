@@ -17,5 +17,3 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: password
     container_name: dummy-mysql
-#    ports:
-#      - "3306:3306"

@@ -89,7 +89,7 @@ func User(c echo.Context) error {
 	email := claims["email"].(string)
 	expired := time.Unix(int64(claims["expired"].(float64)), 0)
 	return c.JSON(http.StatusOK, echo.Map{
-		"message":      "Hello! " + email,
+		"message":      "Hello " + email,
 		"id":           uuid,
 		"expired_date": expired,
 	})
