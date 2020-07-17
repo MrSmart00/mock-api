@@ -1,11 +1,16 @@
 package main
 
 import (
+<<<<<<< HEAD
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+=======
+	"mock-api/handler"
+	"net/http"
+
+>>>>>>> master
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"mock-api/handler"
 )
 
 func main() {
@@ -14,13 +19,17 @@ func main() {
 
 	e := echo.New()
 
+	e.GET("/hello", func(c echo.Context) error {
+		return c.String(http.StatusOK, "Hello, world!")
+	})
+
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
 	e.POST("/signup", handler.Signup)
 	e.POST("/login", handler.Login)
 
-	r := e.Group("/user")
+	r := e.Group("/me")
 	r.Use(middleware.JWT(handler.SigningKey()))
 	r.POST("", handler.User)
 

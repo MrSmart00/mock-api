@@ -2,12 +2,13 @@ package handler
 
 import (
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/google/uuid"
-	"github.com/labstack/echo"
 	"mock-api/model"
 	"net/http"
 	"time"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/google/uuid"
+	"github.com/labstack/echo"
 )
 
 type JwtCustomClaims struct {
@@ -87,9 +88,9 @@ func User(c echo.Context) error {
 	uuid := claims["uuid"].(string)
 	email := claims["email"].(string)
 	expired := time.Unix(int64(claims["expired"].(float64)), 0)
-	return c.JSON(http.StatusOK, echo.Map {
-		"message": "Hello "+email,
-		"id": uuid,
+	return c.JSON(http.StatusOK, echo.Map{
+		"message":      "Hello " + email,
+		"id":           uuid,
 		"expired_date": expired,
 	})
 }
