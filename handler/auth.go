@@ -9,7 +9,9 @@ import (
 	"time"
 )
 
-type jwtCustomClaims struct {
+const SigningKey = "secret"
+
+type JwtCustomClaims struct {
 	email string
 	jwt.StandardClaims
 }
@@ -32,7 +34,7 @@ func Signup(c echo.Context) error {
 		return error
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{
+	return c.JSON(http.StatusOK, echo.Map{
 		"token": token,
 	})
 }
@@ -54,24 +56,28 @@ func Login(c echo.Context) error {
 		return error
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{
+	return c.JSON(http.StatusOK, echo.Map{
 		"token": token,
 	})
 }
 
 func generateToken(identifier *model.Identifier) (string, error) {
-	claims := jwtCustomClaims{
-		identifier.Email,
-		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 72).Unix(),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	accessToken, error := token.SignedString([]byte("secret"))
+	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+	claims["email"] = identifier.Email
+	claims["expired"] = time.Now().Add(time.Hour * 2).Unix()
+	accessToken, error := token.SignedString([]byte(SigningKey))
 	if error != nil {
 		return "", error
 	}
 	return accessToken, nil
+}
+
+func Restricted(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	email := claims["email"].(string)
+	expired := claims["expired"].(float64)
+	fmt.Println(time.Unix(int64(expired), 0))
+	return c.String(http.StatusOK, "Welcome "+email+"!")
 }
