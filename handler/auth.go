@@ -74,7 +74,7 @@ func generateToken(identifier *model.Identifier) (string, error) {
 	claims := token.Claims.(jwt.MapClaims)
 	claims["uuid"] = uuid.String()
 	claims["email"] = identifier.Email
-	claims["expired"] = time.Now().Add(time.Hour * 2).Unix()
+	claims["expired"] = time.Now().Add(time.Minute * 5).Unix()
 	accessToken, error := token.SignedString(SigningKey())
 	if error != nil {
 		return "", error

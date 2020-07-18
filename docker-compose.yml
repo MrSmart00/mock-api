@@ -17,3 +17,5 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: password
     container_name: dummy-mysql
+    volumes:
+      - ./db/mysql_data:/var/lib/mysql
