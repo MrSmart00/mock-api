@@ -30,9 +30,9 @@ func New(db *db.ImplDB) *Auth {
 	return auth
 }
 
-func (auth Auth)Signup(c echo.Context) error {
+func (auth Auth) Signup(context echo.Context) error {
 	identifier := new(model.Identifier)
-	if err := c.Bind(identifier); err != nil {
+	if err := context.Bind(identifier); err != nil {
 		return err
 	}
 
@@ -66,36 +66,54 @@ func (auth Auth)Signup(c echo.Context) error {
 	user.LoggedInAt = time.Now()
 	auth.DB.Create(user)
 
-	return c.JSON(http.StatusOK, echo.Map{
+	return context.JSON(http.StatusOK, echo.Map{
 		"token": accessToken,
 	})
 }
 
-func (auth Auth)Login(c echo.Context) error {
+func (auth Auth) Login(context echo.Context) error {
 	identifier := new(model.Identifier)
-	if err := c.Bind(identifier); err != nil {
+	if err := context.Bind(identifier); err != nil {
 		return err
 	}
 
-	user := auth.DB.Find(*identifier)
+	user, error := auth.DB.Find(*identifier)
+	if error != nil {
+		return error
+	}
 	user = auth.DB.UpdateLoggedInAt(user)
 
-	return c.JSON(http.StatusOK, echo.Map{
+	return context.JSON(http.StatusOK, echo.Map{
 		"token": user.AccessToken,
 	})
 }
 
-func (auth Auth)User(c echo.Context) error {
-	user := c.Get("user").(*jwt.Token)
+func (auth Auth) User(context echo.Context) error {
+	user := context.Get("user").(*jwt.Token)
 	accessToken, error := user.SignedString(SigningKey())
 	if error != nil {
 		return error
 	}
-	foundUser := auth.DB.FindByToken(accessToken)
-	return c.JSON(http.StatusOK, echo.Map{
+	foundUser, error := auth.DB.FindByToken(accessToken)
+	if error != nil {
+		return error
+	}
+	return context.JSON(http.StatusOK, echo.Map{
 		"email":      foundUser.Email,
 		"uuid":       foundUser.UserID,
 		"created_at": foundUser.CreatedAt,
 		"logged_in_at": 	foundUser.LoggedInAt,
 	})
+}
+
+func (auth Auth) DeleteAccount(context echo.Context) error {
+	user := context.Get("user").(*jwt.Token)
+	accessToken, error := user.SignedString(SigningKey())
+	if error != nil {
+		return error
+	}
+	if err := auth.DB.DeleteByToken(accessToken); err != nil {
+		return err
+	}
+	return context.NoContent(http.StatusOK)
 }
