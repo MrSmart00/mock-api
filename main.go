@@ -1,8 +1,7 @@
 package main
 
 import (
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"mock-api/db"
 	"mock-api/handler"
 	"net/http"
 
@@ -11,8 +10,10 @@ import (
 )
 
 func main() {
-	db := connectDB()
+	db := &db.ImplDB{}
+	db.Start()
 	defer db.Close()
+
 
 	e := echo.New()
 
@@ -31,19 +32,4 @@ func main() {
 	r.POST("", handler.User)
 
 	e.Logger.Fatal(e.Start(":3200"))
-}
-
-func connectDB() *gorm.DB {
-	dbms := "mysql"
-	user := "root"
-	password := "password"
-	protocol := "tcp(dummy-mysql:3306)"
-	dbname := "mysql"
-
-	connect := user + ":" + password + "@" + protocol + "/" + dbname
-	db, error := gorm.Open(dbms, connect)
-	if error != nil {
-		panic(error.Error())
-	}
-	return db
 }

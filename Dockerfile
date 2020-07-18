@@ -9,7 +9,3 @@ RUN apk add bash \
         git \
     && curl -fLo /go/bin/air https://git.io/linux_air \
     && chmod +x /go/bin/air
-
-RUN CGO_ENABLED=0 go build -o /go/bin/app
-
-CMD air

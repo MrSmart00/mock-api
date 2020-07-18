@@ -11,9 +11,11 @@ services:
     tty: true
     depends_on:
       - db
-    command: ["./wait-for-it.sh", "db:3306", "-t", "60", "--", "/go/bin/app"]
+    security_opt:
+      - apparmor:unconfined
+    command: air
   db:
-    image: mysql:5.7.31
+    image: mysql:5.7
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: password
