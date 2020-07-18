@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"fmt"
+	"mock-api/db"
 	"mock-api/model"
 	"net/http"
 	"time"
@@ -20,7 +20,17 @@ func SigningKey() []byte {
 	return []byte("secret")
 }
 
-func Signup(c echo.Context) error {
+type Auth struct {
+	DB *db.ImplDB
+}
+
+func New(db *db.ImplDB) *Auth {
+	auth := new(Auth)
+	auth.DB = db
+	return auth
+}
+
+func (auth Auth)Signup(c echo.Context) error {
 	identifier := new(model.Identifier)
 	if err := c.Bind(identifier); err != nil {
 		return err
@@ -33,64 +43,59 @@ func Signup(c echo.Context) error {
 		}
 	}
 
-	token, error := generateToken(identifier)
+	token := jwt.New(jwt.SigningMethodHS256)
+	uuid, error := uuid.NewUUID()
+	if error != nil {
+		return error
+	}
+	claims := token.Claims.(jwt.MapClaims)
+	claims["uuid"] = uuid.String()
+	claims["email"] = identifier.Email
+	claims["expired"] = time.Now().Add(time.Minute * 5).Unix()
+	accessToken, error := token.SignedString(SigningKey())
 	if error != nil {
 		return error
 	}
 
+	user := db.User{}
+	user.AccessToken = accessToken
+	user.UserID = uuid.String()
+	user.Email = identifier.Email
+	user.Password = identifier.Password
+	user.CreatedAt = time.Now()
+	user.LoggedInAt = time.Now()
+	auth.DB.Create(user)
+
 	return c.JSON(http.StatusOK, echo.Map{
-		"token": token,
+		"token": accessToken,
 	})
 }
 
-func Login(c echo.Context) error {
+func (auth Auth)Login(c echo.Context) error {
 	identifier := new(model.Identifier)
 	if err := c.Bind(identifier); err != nil {
 		return err
 	}
 
-	// FIXME Dummy
-	if identifier.Email != "hoge@email.com" || identifier.Password != "aaa" {
-		fmt.Println(identifier)
-		return echo.ErrUnauthorized
-	}
-
-	token, error := generateToken(identifier)
-	if error != nil {
-		return error
-	}
+	user := auth.DB.Find(*identifier)
+	user = auth.DB.UpdateLoggedInAt(user)
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"token": token,
+		"token": user.AccessToken,
 	})
 }
 
-func generateToken(identifier *model.Identifier) (string, error) {
-	token := jwt.New(jwt.SigningMethodHS256)
-	uuid, error := uuid.NewUUID()
-	if error != nil {
-		return "", error
-	}
-	claims := token.Claims.(jwt.MapClaims)
-	claims["uuid"] = uuid.String()
-	claims["email"] = identifier.Email
-	claims["expired"] = time.Now().Add(time.Hour * 2).Unix()
-	accessToken, error := token.SignedString(SigningKey())
-	if error != nil {
-		return "", error
-	}
-	return accessToken, nil
-}
-
-func User(c echo.Context) error {
+func (auth Auth)User(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	uuid := claims["uuid"].(string)
-	email := claims["email"].(string)
-	expired := time.Unix(int64(claims["expired"].(float64)), 0)
+	accessToken, error := user.SignedString(SigningKey())
+	if error != nil {
+		return error
+	}
+	foundUser := auth.DB.FindByToken(accessToken)
 	return c.JSON(http.StatusOK, echo.Map{
-		"message":      "Hello " + email,
-		"id":           uuid,
-		"expired_date": expired,
+		"email":      foundUser.Email,
+		"uuid":       foundUser.UserID,
+		"created_at": foundUser.CreatedAt,
+		"logged_in_at": 	foundUser.LoggedInAt,
 	})
 }

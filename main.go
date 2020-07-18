@@ -1,6 +1,7 @@
 package main
 
 import (
+	"mock-api/db"
 	"mock-api/handler"
 	"net/http"
 
@@ -9,6 +10,11 @@ import (
 )
 
 func main() {
+	db := &db.ImplDB{}
+	db.Start()
+	defer db.Close()
+
+
 	e := echo.New()
 
 	e.GET("/hello", func(c echo.Context) error {
@@ -18,12 +24,14 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	e.POST("/signup", handler.Signup)
-	e.POST("/login", handler.Login)
+	auth := handler.New(db)
+
+	e.POST("/signup", auth.Signup)
+	e.POST("/login", auth.Login)
 
 	r := e.Group("/me")
 	r.Use(middleware.JWT(handler.SigningKey()))
-	r.POST("", handler.User)
+	r.POST("", auth.User)
 
 	e.Logger.Fatal(e.Start(":3200"))
 }

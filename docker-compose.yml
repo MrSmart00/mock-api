@@ -1,11 +1,24 @@
 version: '3'
 
 services:
-  app:
-    container_name: docker-app
+  api:
+    container_name: docker-api
     build: .
     volumes:
-      - .:/go/src/app
+      - .:/go/src/api
     ports:
       - "3200:3200"
     tty: true
+    depends_on:
+      - db
+    security_opt:
+      - apparmor:unconfined
+    command: air
+  db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    container_name: dummy-mysql
+    ports:
+      - "3306:3306"
