@@ -26,17 +26,16 @@ func (impl *ImplDB) Start() {
 	impl.initMigration()
 }
 
-func (impl *ImplDB) Find(identifier model.Identifier) User {
+func (impl *ImplDB) Find(identifier model.Identifier) (User, error) {
 	user := User{}
-	impl.DB.Find(&user, "email = ? AND password = ?", identifier.Email, identifier.Password)
-	return user
+	error := impl.DB.Find(&user, "email = ? AND password = ?", identifier.Email, identifier.Password).Error
+	return user, error
 }
 
-func (impl *ImplDB) FindByToken(token string) User {
+func (impl *ImplDB) FindByToken(token string) (User, error) {
 	user := User{}
-	impl.DB.Find(&user, "access_token = ?", token)
-	fmt.Println("取得したuserの値は: ", user)
-	return user
+	error := impl.DB.Find(&user, "access_token = ?", token).Error
+	return user, error
 }
 
 func (impl *ImplDB) UpdateLoggedInAt(user User) User {
@@ -46,6 +45,14 @@ func (impl *ImplDB) UpdateLoggedInAt(user User) User {
 
 func (impl *ImplDB) Create(user User) {
 	impl.DB.Create(&user)
+}
+
+func (impl *ImplDB) DeleteByToken(token string) error {
+	user, error := impl.FindByToken(token)
+	if error != nil {
+		return error
+	}
+	return impl.DB.Delete(&user).Error
 }
 
 func (impl *ImplDB) Close() {
@@ -75,39 +82,3 @@ func (impl *ImplDB) connectDB() {
 func (impl *ImplDB) initMigration() {
 	impl.DB.AutoMigrate(&User{})
 }
-
-//func (impl *ImplDB) dummy() {
-//	insertUser := User{}
-//	user := User{}
-//	user2 := User{}
-//
-//	insertUser.UserID = 1
-//	insertUser.UserName = "hoge"
-//
-//	// 作成
-//	// INSERT INTO users(user_id,user_name) VALUES(1,'hoge');
-//	impl.DB.Create(&insertUser)
-//
-//	// 取得
-//	// SELECT * FROM users WHERE user_id = 1;
-//	impl.DB.Find(&user, "user_id = ?", 1)
-//
-//	fmt.Println("取得したuserの値は", user)
-//
-//	// 更新
-//	// UPDATE users SET user_name = 'fuga' WHERE user_id = 1 and user_name = 'hoge';
-//	impl.DB.Model(&user).Update("user_name", "fuga")
-//
-//	fmt.Println("更新後のuser:", user)
-//
-//	// 削除
-//	// DELETE FROM users WHERE user_id = 1 and user_name = 'hoge';
-//	impl.DB.Delete(&user)
-//
-//	if err := impl.DB.Find(&user2, "user_id = ?", 1).Error; err != nil {
-//		// エラーハンドリング
-//		fmt.Println("存在しませんでした...")
-//	} else {
-//		fmt.Println("取得したuserの値は", user2)
-//	}
-//}

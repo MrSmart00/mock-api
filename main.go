@@ -32,6 +32,7 @@ func main() {
 	r := e.Group("/me")
 	r.Use(middleware.JWT(handler.SigningKey()))
 	r.POST("", auth.User)
+	r.DELETE("/delete", auth.DeleteAccount)
 
 	e.Logger.Fatal(e.Start(":3200"))
 }
