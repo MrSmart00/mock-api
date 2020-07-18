@@ -19,6 +19,3 @@
 
 # air settings
 tmp/
-
-# mysql settings
-db/
