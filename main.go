@@ -24,12 +24,14 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	e.POST("/signup", handler.Signup)
-	e.POST("/login", handler.Login)
+	auth := handler.New(db)
+
+	e.POST("/signup", auth.Signup)
+	e.POST("/login", auth.Login)
 
 	r := e.Group("/me")
 	r.Use(middleware.JWT(handler.SigningKey()))
-	r.POST("", handler.User)
+	r.POST("", auth.User)
 
 	e.Logger.Fatal(e.Start(":3200"))
 }
