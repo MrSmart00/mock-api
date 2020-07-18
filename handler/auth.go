@@ -78,6 +78,7 @@ func (auth Auth)Login(c echo.Context) error {
 	}
 
 	user := auth.DB.Find(*identifier)
+	user = auth.DB.UpdateLoggedInAt(user)
 
 	return c.JSON(http.StatusOK, echo.Map{
 		"token": user.AccessToken,
@@ -95,6 +96,6 @@ func (auth Auth)User(c echo.Context) error {
 		"email":      foundUser.Email,
 		"uuid":       foundUser.UserID,
 		"created_at": foundUser.CreatedAt,
-		"login_at": 	foundUser.LoggedInAt,
+		"logged_in_at": 	foundUser.LoggedInAt,
 	})
 }
