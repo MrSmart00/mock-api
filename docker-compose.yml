@@ -2,7 +2,7 @@ version: '3'
 
 services:
   api:
-    container_name: docker-app
+    container_name: docker-api
     build: .
     volumes:
       - .:/go/src/api
@@ -11,11 +11,12 @@ services:
     tty: true
     depends_on:
       - db
+    command: ["./wait-for-it.sh", "db:3306", "-t", "60", "--", "/go/bin/app"]
   db:
     image: mysql:5.7.31
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: password
     container_name: dummy-mysql
-    volumes:
-      - ./db/mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
