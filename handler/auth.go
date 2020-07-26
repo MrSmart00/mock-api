@@ -101,8 +101,8 @@ func (auth Auth) User(context echo.Context) error {
 	return context.JSON(http.StatusOK, echo.Map{
 		"email":      foundUser.Email,
 		"uuid":       foundUser.UserID,
-		"created_at": foundUser.CreatedAt,
-		"logged_in_at": 	foundUser.LoggedInAt,
+		"created_at": foundUser.CreatedAt.Format(time.RFC3339),
+		"logged_in_at": 	foundUser.LoggedInAt.Format(time.RFC3339),
 	})
 }
 
