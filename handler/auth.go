@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/labstack/echo/middleware"
 	"mock-api/db"
 	"mock-api/model"
 	"net/http"
@@ -11,13 +12,20 @@ import (
 	"github.com/labstack/echo"
 )
 
-type JwtCustomClaims struct {
-	email string
+type jwtCustomClaims struct {
+	ID string `json:"id"`
 	jwt.StandardClaims
 }
 
-func SigningKey() []byte {
+func signingKey() []byte {
 	return []byte("secret")
+}
+
+func JWTConfig() middleware.JWTConfig {
+	return middleware.JWTConfig{
+		Claims:     &jwtCustomClaims{},
+		SigningKey: signingKey(),
+	}
 }
 
 type Auth struct {
@@ -43,23 +51,27 @@ func (auth Auth) Signup(context echo.Context) error {
 		}
 	}
 
-	token := jwt.New(jwt.SigningMethodHS256)
 	uuid, error := uuid.NewUUID()
 	if error != nil {
 		return error
 	}
-	claims := token.Claims.(jwt.MapClaims)
-	claims["uuid"] = uuid.String()
-	claims["email"] = identifier.Email
-	claims["expired"] = time.Now().Add(time.Minute * 5).Unix()
-	accessToken, error := token.SignedString(SigningKey())
+	uuidString := uuid.String()
+	claims := &jwtCustomClaims{
+		uuidString,
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Minute * 10).Unix(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	accessToken, error := token.SignedString(signingKey())
 	if error != nil {
 		return error
 	}
 
 	user := db.User{}
 	user.AccessToken = accessToken
-	user.UserID = uuid.String()
+	user.UserID = uuidString
 	user.Email = identifier.Email
 	user.Password = identifier.Password
 	user.CreatedAt = time.Now()
@@ -89,26 +101,23 @@ func (auth Auth) Login(context echo.Context) error {
 }
 
 func (auth Auth) User(context echo.Context) error {
-	user := context.Get("user").(*jwt.Token)
-	accessToken, error := user.SignedString(SigningKey())
-	if error != nil {
-		return error
-	}
-	foundUser, error := auth.DB.FindByToken(accessToken)
+	token := context.Get("user").(*jwt.Token)
+	claims := token.Claims.(*jwtCustomClaims)
+	foundUser, error := auth.DB.FindByUserId(claims.ID)
 	if error != nil {
 		return error
 	}
 	return context.JSON(http.StatusOK, echo.Map{
-		"email":      foundUser.Email,
-		"uuid":       foundUser.UserID,
-		"created_at": foundUser.CreatedAt.Format(time.RFC3339),
-		"logged_in_at": 	foundUser.LoggedInAt.Format(time.RFC3339),
+		"email":      	foundUser.Email,
+		"id":       		foundUser.UserID,
+		"created_at": 	foundUser.CreatedAt.Format(time.RFC3339),
+		"logged_in_at": foundUser.LoggedInAt.Format(time.RFC3339),
 	})
 }
 
 func (auth Auth) DeleteAccount(context echo.Context) error {
 	user := context.Get("user").(*jwt.Token)
-	accessToken, error := user.SignedString(SigningKey())
+	accessToken, error := user.SignedString(signingKey())
 	if error != nil {
 		return error
 	}

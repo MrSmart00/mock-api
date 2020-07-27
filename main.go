@@ -30,7 +30,7 @@ func main() {
 	e.POST("/login", auth.Login)
 
 	r := e.Group("/me")
-	r.Use(middleware.JWT(handler.SigningKey()))
+	r.Use(middleware.JWTWithConfig(handler.JWTConfig()))
 	r.GET("", auth.User)
 	r.DELETE("", auth.DeleteAccount)
 

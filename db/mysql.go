@@ -38,6 +38,12 @@ func (impl *ImplDB) FindByToken(token string) (User, error) {
 	return user, error
 }
 
+func (impl *ImplDB) FindByUserId(userId string) (User, error) {
+	user := User{}
+	error := impl.DB.Find(&user, "user_id = ?", userId).Error
+	return user, error
+}
+
 func (impl *ImplDB) UpdateLoggedInAt(user User) User {
 	impl.DB.Model(&user).Update("logged_in_at", time.Now())
 	return user
