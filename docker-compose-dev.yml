@@ -3,7 +3,11 @@ version: '3'
 services:
   api:
     container_name: docker-api
-    image: nexearth/mock-api:alpine
+    build:
+      context: .
+      dockerfile: Dockerfile-dev
+    volumes:
+      - .:/go/src/api
     ports:
       - "3200:3200"
     tty: true
