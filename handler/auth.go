@@ -59,7 +59,7 @@ func (auth Auth) Signup(context echo.Context) error {
 	claims := &jwtCustomClaims{
 		uuidString,
 		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Minute * 10).Unix(),
+			ExpiresAt: time.Now().Add(time.Minute * 1).Unix(),
 		},
 	}
 
